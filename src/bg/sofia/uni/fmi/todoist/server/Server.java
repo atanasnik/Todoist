@@ -1,9 +1,7 @@
 package bg.sofia.uni.fmi.todoist.server;
 
-import bg.sofia.uni.fmi.todoist.command.Command;
-import bg.sofia.uni.fmi.todoist.command.CommandExecutor;
-import bg.sofia.uni.fmi.todoist.command.CommandGenerator;
-import bg.sofia.uni.fmi.todoist.command.CommandSelector;
+import bg.sofia.uni.fmi.todoist.command.*;
+import bg.sofia.uni.fmi.todoist.command.tools.ArgumentChecker;
 import bg.sofia.uni.fmi.todoist.exception.InvalidCommandException;
 import bg.sofia.uni.fmi.todoist.storage.CollaborationsStorage;
 import bg.sofia.uni.fmi.todoist.storage.UsersStorage;
@@ -38,6 +36,11 @@ public class Server extends Thread {
 
     private static final String INVALID_COMMAND = "Invalid command!";
     private static final String FAILED_ACCESS_ATTEMPT = "Failed access attempt. ";
+    private static final String FILE_NOT_FOUND = "File not found";
+    private static final String IO_ERROR = "An error occurred upon performing I/O operation";
+
+    private static final String USERS_STORAGE_PATH = "database/usersStorage.json";
+    private static final String COLLABORATIONS_STORAGE_PATH = "database/collaborationsStorage.json";
 
     private static final String COLON = ": ";
     private CommandExecutor commandExecutor;
@@ -92,10 +95,13 @@ public class Server extends Thread {
 
                             Command cmd = null;
                             String output;
+
                             try {
                                 cmd = CommandGenerator.newCommand(clientInput);
                                 commandExecutor =
                                         CommandSelector.select(cmd, clients.getOrDefault(clientChannel, null));
+
+                                ArgumentChecker.assureArgsMatch(cmd, commandExecutor.getArgs());
 
                                 output = commandExecutor.executeCommand();
 
@@ -103,15 +109,12 @@ public class Server extends Thread {
                                     renameClient(clientChannel, cmd);
                                     saveData();
                                 }
-
                             } catch (InvalidCommandException e) {
-                                //throw new RuntimeException(e);
                                 output = INVALID_COMMAND;
                             }
 
                             System.out.println(clients.get(clientChannel) + COLON + clientInput);
                             writeClientOutput(clientChannel, output);
-
                         } else if (key.isAcceptable()) {
                             accept(selector, key);
                         }
@@ -120,10 +123,11 @@ public class Server extends Thread {
                     }
                 } catch (IOException e) {
                     System.out.println("Error occurred while processing client request: " + e.getMessage());
+                    throw new RuntimeException(IO_ERROR, e);
                 }
             }
         } catch (IOException e) {
-            throw new UncheckedIOException("failed to start server", e);
+            throw new UncheckedIOException("Failed to start server", e);
         }
     }
 
@@ -135,9 +139,11 @@ public class Server extends Thread {
 
     public void halt() {
         this.isServerWorking = false;
+
         if (selector.isOpen()) {
             selector.wakeup();
         }
+
         System.out.println("Server is being stopped");
     }
 
@@ -187,65 +193,69 @@ public class Server extends Thread {
 
     private void saveUsersStorage() {
         String usersJson = gson.toJson(commandExecutor.usersStorage());
-        try (Writer writer = new FileWriter("database/usersStorage.json")) {
+
+        try (Writer writer = new FileWriter(USERS_STORAGE_PATH)) {
             writer.write(usersJson);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(IO_ERROR, e);
         }
     }
 
     private void saveCollaborationsStorage() {
         String usersJson = gson.toJson(commandExecutor.collaborationsStorage());
-        try (Writer writer = new FileWriter("database/collaborationsStorage.json")) {
+
+        try (Writer writer = new FileWriter(COLLABORATIONS_STORAGE_PATH)) {
             writer.write(usersJson);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(IO_ERROR, e);
         }
     }
 
     private void readData() {
-        if (!isFileEmpty("database/usersStorage.json")) {
+        if (!isFileEmpty(USERS_STORAGE_PATH)) {
             readUsersStorage();
         }
-        if (!isFileEmpty("database/collaborationsStorage.json")) {
+
+        if (!isFileEmpty(COLLABORATIONS_STORAGE_PATH)) {
             readCollaborationsStorage();
         }
     }
 
     private void readUsersStorage() {
-        try (var fileReader = new BufferedReader(new FileReader("database/usersStorage.json"))) {
+        try (var fileReader = new BufferedReader(new FileReader(USERS_STORAGE_PATH))) {
             String usersJson = "";
             String line;
+
             while ((line = fileReader.readLine()) != null) {
                 usersJson += line;
             }
-            CommandExecutor.setUsersStorage(gson.fromJson(usersJson, UsersStorage.class));
 
+            CommandExecutor.setUsersStorage(gson.fromJson(usersJson, UsersStorage.class));
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            throw new RuntimeException(FILE_NOT_FOUND, e);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(IO_ERROR, e);
         }
     }
 
     private void readCollaborationsStorage() {
-        try (var fileReader = new BufferedReader(new FileReader("database/collaborationsStorage.json"))) {
+        try (var fileReader = new BufferedReader(new FileReader(COLLABORATIONS_STORAGE_PATH))) {
             String collaborationsJson = "";
             String line;
+
             while ((line = fileReader.readLine()) != null) {
                 collaborationsJson += line;
             }
-            CommandExecutor.setCollaborationsStorage(gson.fromJson(collaborationsJson, CollaborationsStorage.class));
 
+            CommandExecutor.setCollaborationsStorage(gson.fromJson(collaborationsJson, CollaborationsStorage.class));
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            throw new RuntimeException(FILE_NOT_FOUND, e);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(IO_ERROR, e);
         }
     }
 
     private boolean isFileEmpty(String fileName) {
-
         Path path = Paths.get(fileName);
 
         try {
@@ -255,9 +265,10 @@ public class Server extends Thread {
                 Files.createFile(path);
                 System.out.println("New file created");
             } catch (IOException ex) {
-                e.printStackTrace();
+                throw new RuntimeException(IO_ERROR, e);
             }
         }
+
         return false;
     }
 }

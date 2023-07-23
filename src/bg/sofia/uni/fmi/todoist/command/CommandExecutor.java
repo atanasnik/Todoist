@@ -4,12 +4,11 @@ import bg.sofia.uni.fmi.todoist.storage.CollaborationsStorage;
 import bg.sofia.uni.fmi.todoist.storage.UsersStorage;
 import bg.sofia.uni.fmi.todoist.validation.Validator;
 
+import java.util.Map;
+
 public abstract class CommandExecutor {
 
     private static final String COMMAND = "Command";
-
-    /*private static final String INVALID_ARGS_COUNT_MESSAGE_FORMAT =
-            "Invalid count of arguments: \"%s\" expects %d arguments.";*/
     protected static final String OPERATION_SUCCESSFUL_MESSAGE_FORMAT = "%s successful!";
 
     protected static UsersStorage usersStorage;
@@ -45,5 +44,14 @@ public abstract class CommandExecutor {
         CommandExecutor.collaborationsStorage = collaborationsStorage;
     }
 
+    public Command cmd() {
+        return cmd;
+    }
+
+    public String username() {
+        return username;
+    }
+
     public abstract String executeCommand();
+    public abstract Map<String, Boolean> getArgs();
 }

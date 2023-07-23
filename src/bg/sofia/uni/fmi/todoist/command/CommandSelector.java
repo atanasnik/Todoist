@@ -1,5 +1,9 @@
 package bg.sofia.uni.fmi.todoist.command;
 
+import bg.sofia.uni.fmi.todoist.command.account.LoginCommand;
+import bg.sofia.uni.fmi.todoist.command.account.RegisterCommand;
+import bg.sofia.uni.fmi.todoist.command.collaborations.*;
+import bg.sofia.uni.fmi.todoist.command.tasks.*;
 import bg.sofia.uni.fmi.todoist.exception.InvalidCommandException;
 
 public class CommandSelector {
@@ -26,13 +30,23 @@ public class CommandSelector {
 
     public static CommandExecutor select(Command cmd, String username) throws InvalidCommandException {
         return switch(cmd.command()) {
-            case CMD_REGISTER, CMD_LOGIN -> new AccountExecutor(username, cmd);
+            case CMD_REGISTER -> new RegisterCommand(username, cmd);
+            case CMD_LOGIN -> new LoginCommand(username, cmd);
 
-            case CMD_ADD_TASK, CMD_DELETE_TASK, CMD_GET_TASK, CMD_LIST_TASKS,
-                    CMD_LIST_DASHBOARD, CMD_FINISH_TASK, CMD_UPDATE_TASK -> new TaskExecutor(username, cmd);
+            case CMD_ADD_TASK -> new AddTaskCommand(username, cmd);
+            case CMD_DELETE_TASK -> new DeleteTaskCommand(username, cmd);
+            case CMD_UPDATE_TASK -> new UpdateTaskCommand(username, cmd);
+            case CMD_GET_TASK -> new GetTaskCommand(username, cmd);
+            case CMD_LIST_TASKS -> new ListTasksCommand(username, cmd);
+            case CMD_LIST_DASHBOARD -> new ListDashboardCommand(username, cmd);
+            case CMD_FINISH_TASK -> new FinishTaskCommand(username, cmd);
 
-            case CMD_ADD_COLLABORATION, CMD_DELETE_COLLABORATION, CMD_LIST_COLLABORATIONS,
-                    CMD_ADD_USER, CMD_ASSIGN_TASK, CMD_LIST_USERS -> new CollaborationExecutor(username, cmd);
+            case CMD_ADD_COLLABORATION -> new AddCollaborationCommand(username, cmd);
+            case CMD_DELETE_COLLABORATION -> new DeleteCollaborationCommand(username, cmd);
+            case CMD_LIST_COLLABORATIONS -> new ListCollaborationsCommand(username, cmd);
+            case CMD_ADD_USER -> new AddUserCommand(username, cmd);
+            case CMD_ASSIGN_TASK -> new AssignTaskCommand(username, cmd);
+            case CMD_LIST_USERS -> new ListUsersCommand(username, cmd);
 
             default -> throw new InvalidCommandException("Unknown command");
         };
