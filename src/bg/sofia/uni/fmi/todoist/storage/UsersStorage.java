@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class UsersStorage {
-
     private static final String USERNAME = "Username";
     private static final String PASSWORD = "Password";
 
@@ -64,5 +63,4 @@ public class UsersStorage {
             throw new WrongPasswordException("Password is incorrect");
         }
     }
-
 }

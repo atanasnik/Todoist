@@ -5,7 +5,6 @@ import bg.sofia.uni.fmi.todoist.task.Task;
 
 
 public interface TasksStorage extends Storage<Task> {
-
     //Package-private constants
     static final String TASK_NAME = "Task name";
     static final String TASK_OBJECT = "Task";

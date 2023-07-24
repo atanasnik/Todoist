@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TimedTasksStorage implements TasksStorage {
-
     private static final String DATE = "Date";
 
     private final Map<String, Map<String, Task>> tasks;
@@ -88,5 +87,4 @@ public class TimedTasksStorage implements TasksStorage {
                 .flatMap(map -> map.values().stream())
                 .collect(Collectors.toSet());
     }
-
 }

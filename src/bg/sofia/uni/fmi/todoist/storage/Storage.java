@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 public interface Storage<T> {
-
     public void add(String identifier, T toAdd) throws AlreadyExistsException;
 
     public Set<T> list();
-
 }

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 public class CommandGenerator {
-
     private static final String EQUALS = "=";
     private static final Character DASH = '-';
 

@@ -7,7 +7,6 @@ import bg.sofia.uni.fmi.todoist.validation.Validator;
 import java.util.Map;
 
 public abstract class CommandExecutor {
-
     private static final String COMMAND = "Command";
     protected static final String OPERATION_SUCCESSFUL_MESSAGE_FORMAT = "%s successful!";
 

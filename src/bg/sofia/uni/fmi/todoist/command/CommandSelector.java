@@ -7,7 +7,6 @@ import bg.sofia.uni.fmi.todoist.command.tasks.*;
 import bg.sofia.uni.fmi.todoist.exception.InvalidCommandException;
 
 public class CommandSelector {
-
     private static final String CMD_REGISTER = "register";
     private static final String CMD_LOGIN = "login";
 

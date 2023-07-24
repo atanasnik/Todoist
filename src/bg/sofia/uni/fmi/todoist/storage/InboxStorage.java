@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class InboxStorage implements TasksStorage {
-
     private final Map<String, Task> tasks;
 
     {

@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class CollaborationsStorage implements Storage<Collaboration> {
-
     private static final String COLLABORATION_NAME = "Collaboration name";
     private static final String COLLABORATION_OBJECT = "Collaboration";
 
@@ -62,5 +61,4 @@ public class CollaborationsStorage implements Storage<Collaboration> {
     public boolean contains(String identifier) {
         return collaborations.containsKey(identifier);
     }
-
 }
