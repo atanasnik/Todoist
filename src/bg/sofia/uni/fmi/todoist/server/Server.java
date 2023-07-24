@@ -12,7 +12,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -27,7 +26,10 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class Server extends Thread {
     private static final int BUFFER_SIZE = 2048;
@@ -36,15 +38,17 @@ public class Server extends Thread {
 
     private static final String INVALID_COMMAND = "Invalid command!";
     private static final String FAILED_ACCESS_ATTEMPT = "Failed access attempt. ";
-    private static final String FILE_NOT_FOUND = "File not found";
-    private static final String IO_ERROR = "An error occurred upon performing I/O operation";
+    private static final String FILE_NOT_FOUND = "An error occurred due to a file not being found: ";
+    private static final String IO_ERROR = "An error occurred upon performing I/O operation: ";
 
     private static final String USERS_STORAGE_PATH = "database/usersStorage.json";
     private static final String COLLABORATIONS_STORAGE_PATH = "database/collaborationsStorage.json";
+    private static final String LOGS_PATH = "logs/appLogs.txt";
 
     private static final String COLON = ": ";
     private CommandExecutor commandExecutor;
     private Map<SocketChannel, String> clients;
+    private static Logger logger;
     private final int port;
     private boolean isServerWorking;
 
@@ -54,6 +58,9 @@ public class Server extends Thread {
     public Server(int port) {
         this.port = port;
         this.clients = new HashMap<>();
+
+        logger = Logger.getLogger(this.getClass().getName());
+        initFileHandler();
     }
 
     @Override
@@ -123,11 +130,11 @@ public class Server extends Thread {
                     }
                 } catch (IOException e) {
                     System.out.println("Error occurred while processing client request: " + e.getMessage());
-                    throw new RuntimeException(IO_ERROR, e);
+                    logger.log(Level.SEVERE, IO_ERROR + e.getMessage(), e);
                 }
             }
         } catch (IOException e) {
-            throw new UncheckedIOException("Failed to start server", e);
+            logger.log(Level.SEVERE, IO_ERROR + e.getMessage(), e);
         }
     }
 
@@ -197,7 +204,7 @@ public class Server extends Thread {
         try (Writer writer = new FileWriter(USERS_STORAGE_PATH)) {
             writer.write(usersJson);
         } catch (IOException e) {
-            throw new RuntimeException(IO_ERROR, e);
+            logger.log(Level.SEVERE, IO_ERROR + e.getMessage(), e);
         }
     }
 
@@ -207,15 +214,17 @@ public class Server extends Thread {
         try (Writer writer = new FileWriter(COLLABORATIONS_STORAGE_PATH)) {
             writer.write(usersJson);
         } catch (IOException e) {
-            throw new RuntimeException(IO_ERROR, e);
+            logger.log(Level.SEVERE, IO_ERROR + e.getMessage(), e);
         }
     }
 
     private void readData() {
+        createFileIfDoesNotExist(USERS_STORAGE_PATH);
         if (!isFileEmpty(USERS_STORAGE_PATH)) {
             readUsersStorage();
         }
 
+        createFileIfDoesNotExist(COLLABORATIONS_STORAGE_PATH);
         if (!isFileEmpty(COLLABORATIONS_STORAGE_PATH)) {
             readCollaborationsStorage();
         }
@@ -232,9 +241,9 @@ public class Server extends Thread {
 
             CommandExecutor.setUsersStorage(gson.fromJson(usersJson, UsersStorage.class));
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(FILE_NOT_FOUND, e);
+            logger.log(Level.SEVERE, FILE_NOT_FOUND + e.getMessage(), e);
         } catch (IOException e) {
-            throw new RuntimeException(IO_ERROR, e);
+            logger.log(Level.SEVERE, IO_ERROR + e.getMessage(), e);
         }
     }
 
@@ -249,9 +258,9 @@ public class Server extends Thread {
 
             CommandExecutor.setCollaborationsStorage(gson.fromJson(collaborationsJson, CollaborationsStorage.class));
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(FILE_NOT_FOUND, e);
+            logger.log(Level.SEVERE, FILE_NOT_FOUND + e.getMessage(), e);
         } catch (IOException e) {
-            throw new RuntimeException(IO_ERROR, e);
+            logger.log(Level.SEVERE, IO_ERROR + e.getMessage(), e);
         }
     }
 
@@ -261,14 +270,44 @@ public class Server extends Thread {
         try {
             return (Files.size(path) == 0);
         } catch (IOException e) {
-            try {
-                Files.createFile(path);
-                System.out.println("New file created");
-            } catch (IOException ex) {
-                throw new RuntimeException(IO_ERROR, e);
-            }
+            logger.log(Level.SEVERE, IO_ERROR + e.getMessage(), e);
         }
 
         return false;
+    }
+
+    private void initFileHandler() {
+        FileHandler fileHandler = null;
+        createFileIfDoesNotExist(LOGS_PATH);
+
+        try {
+            fileHandler = new FileHandler(LOGS_PATH);
+        } catch (IOException e) {
+            throw new RuntimeException(IO_ERROR, e);
+        }
+
+        fileHandler.setFormatter(new SimpleFormatter());
+        logger.addHandler(fileHandler);
+    }
+
+    private void createFileIfDoesNotExist(String fileName) {
+        Path path = Paths.get(fileName);
+
+        if (Files.exists(path)) {
+            return;
+        }
+
+        try {
+            Path parentDir = path.getParent();
+
+            if (parentDir != null) {
+                Files.createDirectories(parentDir);
+            }
+
+            Files.createFile(path);
+            System.out.println("New file created: " + fileName);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, IO_ERROR + ex.getMessage(), ex);
+        }
     }
 }

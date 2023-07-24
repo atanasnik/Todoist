@@ -8,7 +8,6 @@ import bg.sofia.uni.fmi.todoist.server.Server;
 import java.util.Scanner;
 
 public class Todoist {
-
     private static final String START = "start";
     private static final String STOP = "stop";
     private static final String INVALID_COMMAND = "Invalid command!";
