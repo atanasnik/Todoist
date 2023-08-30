@@ -6,10 +6,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-// WORK TO BE DONE HERE:
-// PERHAPS ADD ANOTHER DATETIME FIELD WHICH MARKS THE DATE OF ADDING
-// REBUILD EQUALS AND HASHCODE
-
 public class Task {
     protected final String name;
     protected boolean isCompleted = false;
